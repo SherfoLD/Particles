@@ -1,0 +1,32 @@
+{
+  "width": 1200,
+  "height": 760,
+  "duration": 12,
+  "types": [
+    { "id": "slow-window", "base": "window", "hz": 30, "delayMs": 100 },
+    { "id": "photo-icon", "base": "icon", "shape": "roundedRect", "radius": 5 },
+    { "id": "round-widget", "base": "widget", "shape": "ellipse" },
+    {
+      "id": "notched-folder", "base": "folder", "shape": "polygon",
+      "points": [[0, 0], [1, 0], [1, 1], [0.65, 1], [0.65, 0.7], [0.35, 0.7], [0.35, 1], [0, 1]]
+    }
+  ],
+  "obstacles": [
+    { "id": "dock", "type": "dock", "frame": [250, 5, 700, 65] },
+    { "id": "widget", "type": "widget", "frame": [70, 470, 190, 170], "delayMs": 150 },
+    { "id": "folder", "type": "folder", "frame": [310, 500, 80, 80], "delayMs": 200 },
+    { "id": "document", "type": "icon", "frame": [430, 500, 70, 90] },
+    {
+      "id": "rising-window", "type": "slow-window", "frame": [610, 120, 400, 180],
+      "spawnAt": 1, "removeAt": 10,
+      "keyframes": [
+        { "at": 3, "frame": [610, 120, 400, 180] },
+        { "at": 6, "frame": [610, 390, 400, 180] },
+        { "at": 9, "frame": [610, 390, 400, 180] }
+      ]
+    },
+    { "id": "photo", "type": "photo-icon", "frame": [110, 270, 110, 70], "spawnAt": 2 },
+    { "id": "round", "type": "round-widget", "frame": [320, 270, 100, 100], "spawnAt": 2 },
+    { "id": "notched", "type": "notched-folder", "frame": [460, 270, 110, 90], "spawnAt": 4 }
+  ]
+}
