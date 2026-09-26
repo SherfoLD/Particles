@@ -14,7 +14,7 @@ enum SyntheticFixtures {
             CommandLine.arguments.contains("--compressed-pile-fixture")
     }
     static let flags = ["--cannon-fixture", "--window-fixtures", "--file-icon-fixtures", "--pile-drag-fixture",
-                        "--compressed-pile-fixture", "--settled-pile-fixture", "--squeeze-fixture", "--cursor-fixture"]
+                        "--compressed-pile-fixture", "--settled-pile-fixture", "--squeeze-fixture", "--cursor-fixture", "--motion-fixture"]
     static var isSelected: Bool { flags.contains(where: CommandLine.arguments.contains) }
 
     static var reportName: String {
@@ -35,6 +35,21 @@ enum SyntheticFixtures {
         let frequency = phase < 2 ? 0 : (phase < 4 ? 0.5 : 6)
         let x = engine.bounds.midX + sin(max(0, phase - 2) * .pi * 2 * frequency) * engine.bounds.width * 0.4
         engine.cursorPosition = CGPoint(x: x, y: engine.bounds.minY + 45 + sin(max(0, phase - 2) * 2) * 25)
+    }
+
+    /// Performance workload: settle, tilt, shake, then restore ordinary gravity.
+    static func updateMotion(in engine: ParticleEngine, time: Double) {
+        guard CommandLine.arguments.contains("--motion-fixture") else { return }
+        let phase = time.truncatingRemainder(dividingBy: 12)
+        let strength = abs(engine.gravity)
+        if phase < 3 || phase >= 9 {
+            engine.externalAcceleration = .zero
+        } else if phase < 6 {
+            engine.externalAcceleration = CGVector(dx: sin((phase - 3) * 2) * strength, dy: strength * 0.3)
+        } else {
+            engine.externalAcceleration = CGVector(dx: sin(phase * 24) * strength * 3,
+                                                   dy: cos(phase * 19) * strength * 3)
+        }
     }
 
     static func fixtures(in bounds: CGRect, time: Double = 0) -> [CollisionShape] {

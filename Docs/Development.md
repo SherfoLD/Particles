@@ -42,6 +42,7 @@ Keep desktop access in `Sources/Particles/Desktop/` so synthetic runs need no Fi
 - `WindowGeometryTracker` samples normal application windows on a background timer targeting 60 Hz. Overlay positions help detect Space transitions. The per-display simulation pauses while its Space moves and resumes after geometry stabilizes.
 - Metal runs a 240 Hz particle solver with a GPU spatial hash and draws particles from GPU buffers. The CPU solver remains available with `--cpu-physics` for comparison. Very dense or crushed particles can be despawned to keep work bounded.
 - Each display has a transparent, click-through overlay beneath normal application windows. The cannon alone receives pointer input. Cursor collisions share the existing Metal update path and reset their stroke history after display or Space changes.
+- `Accelerometer` reads the built-in AppleSPU accelerometer through IOKit HID on the main run loop in common modes. The undocumented [SPU report format](https://github.com/olvvier/apple-silicon-accelerometer) is hardware/macOS dependent. It requests 100 Hz from the accelerometer driver only, filters tilt and shake, and supplies bounded acceleration to both CPU and Metal solvers. Readings older than 250 ms fall back to ordinary gravity; a two-second stream timeout closes the device and reports failure in the menu. Sensor access may be restricted by macOS. The app does not elevate privileges.
 
 Collision geometry is best effort: Finder badges and some previews may differ from traced artwork; widget detection depends on macOS window metadata; custom window shapes and transparent regions are not traced. Window sampling can miss a very fast drag. See [Performance history](PerformanceHistory.md) for past measurements and optimization notes.
 
@@ -96,8 +97,11 @@ For an individual offscreen run or scenario replay:
 ```sh
 .build/release/Particles --render-benchmark --count 3000 --frames 1440 \
   --snapshot build/particles.png --require-120fps
+.build/release/Particles --render-benchmark --motion-fixture --count 10000 --frames 1440
 .build/release/Particles --render-benchmark --scenario Scenarios/lift-window.json \
   --sandbox-log build/lift-frames.jsonl > build/lift-report.json
 ```
 
 `--sandbox-log` records source and delivered geometry, sample age, position error, and timing. `--profile-physics` emits GPU diagnostics. Instrumentation changes the workload, so compare performance using an uninstrumented run. `--ball-speed` and `--ball-radius` are available for sandbox and benchmark runs. `--window-benchmark --duration 10 --require-30hz` measures real window-geometry polling without Finder access.
+
+`--motion-fixture` exercises settling, tilt, shake, and restored gravity over a 12-second cycle without reading hardware. It works in the sandbox, CPU benchmark, and render benchmark (including `--cpu-physics`).

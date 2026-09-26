@@ -75,6 +75,7 @@ final class ParticleSandboxDelegate: NSObject, NSApplicationDelegate {
             scene.beforeFrame = { [weak self, weak scene, weak canvas] time in
                 guard let scene else { return false }
                 SyntheticFixtures.updateCursor(in: scene.engine, time: time - started)
+                SyntheticFixtures.updateMotion(in: scene.engine, time: time - started)
                 if let world {
                     self?.controls?.beforeFrame(at: time - started)
                     world.advance(to: time - started, engine: scene.engine)

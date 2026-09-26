@@ -71,7 +71,7 @@ enum ParticleComputeKernels {
             despawn(a,statistics,p,invalidStateDespawn); state[i]=a;
             atomic_store_explicit(rebuild,p.geometry.w,memory_order_relaxed); return;
         }
-        a.velocity.y += p.dynamics.x * p.dynamics.y;
+        a.velocity.xy += float2(p.limits.z, p.dynamics.x) * p.dynamics.y;
         float speed2 = dot(a.velocity.xy, a.velocity.xy);
         float limit = p.limits.x;
         if (speed2 > limit * limit) a.velocity.xy *= limit * rsqrt(speed2);

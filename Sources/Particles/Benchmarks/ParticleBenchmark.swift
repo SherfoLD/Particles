@@ -20,6 +20,7 @@ enum ParticleBenchmark {
             let time = Double(frame) / 120
             if frame % 12 == 1 { engine.collisionShapes = SyntheticFixtures.fixtures(in: bounds, time: time) }
             let start = ProcessInfo.processInfo.systemUptime
+            SyntheticFixtures.updateMotion(in: engine, time: time)
             if withWindows, frame % 2 == 1 { engine.windowObstacles = SyntheticFixtures.windowFixtures(in: bounds, time: time) }
             engine.update(at: time)
             let elapsed = (ProcessInfo.processInfo.systemUptime - start) * 1000
@@ -29,6 +30,7 @@ enum ParticleBenchmark {
         }
         PerformanceReport.printJSON(["mode": "physics", "particles": count, "frames": frames, "simulationHz": 240,
                    "maximumSpeed": engine.maximumSpeed, "ballRadius": LaunchArguments.ballRadius,
+                   "deviceMotion": CommandLine.arguments.contains("--motion-fixture"),
                    "integrationSubsteps": engine.integrationSubsteps,
                    "windowObstacles": engine.windowObstacles.count,
                    "frameBudgetMs": 1000.0 / 120, "cpuMs": PerformanceReport.summary(times),

@@ -63,6 +63,7 @@ enum MetalBenchmark {
                 }
                 let start = ProcessInfo.processInfo.systemUptime
                 SyntheticFixtures.updateCursor(in: engine, time: time)
+                SyntheticFixtures.updateMotion(in: engine, time: time)
                 if cannon {
                     // Sustained maximum-rate emission exercises growing dispatches,
                     // immutable uploads, cache invalidation and pool wraparound.
@@ -173,6 +174,7 @@ enum MetalBenchmark {
                                      "maximumSpeed": engine.maximumSpeed, "ballRadius": radius,
                                      "integrationSubsteps": engine.integrationSubsteps,
                                      "cursorCollisions": SyntheticFixtures.cursorFixture,
+                                     "deviceMotion": CommandLine.arguments.contains("--motion-fixture"),
                                      "windowObstacles": engine.windowObstacles.count,
                                      "windowPollHz": windowHz,
                                      "dragHz": LaunchArguments.value("--drag-hz", default: 1),

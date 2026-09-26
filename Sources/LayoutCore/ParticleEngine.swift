@@ -95,6 +95,8 @@ public final class ParticleEngine {
         }
     }
     public var gravity: CGFloat = -1_800
+    /// Additional acceleration in canvas points/s² (for device motion).
+    public var externalAcceleration: CGVector = .zero
     public static let defaultMaximumSpeed: CGFloat = 300
     private var speedLimit = ParticleEngine.defaultMaximumSpeed
     /// Points per second, independent of radius. Changes apply on the next step.
@@ -235,7 +237,8 @@ public final class ParticleEngine {
         let limitSquared = limit * limit
         for i in 0..<activeParticleCount {
             var velocity = states[i].velocity
-            velocity.dy += gravity * step
+            velocity.dx += externalAcceleration.dx * step
+            velocity.dy += (gravity + externalAcceleration.dy) * step
             let squaredSpeed = velocity.dx * velocity.dx + velocity.dy * velocity.dy
             if squaredSpeed > limitSquared {
                 let scale = limit / sqrt(squaredSpeed)

@@ -5,7 +5,7 @@ import LayoutCore
 
 /// A menu-bar toggle controls the click-through desktop particle overlay.
 @MainActor
-final class ParticlesDelegate: NSObject, NSApplicationDelegate {
+final class ParticlesDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private static let defaultBallCount = 10_000
     private static let ballCountDefaultsKey = "ballCount"
     private static let defaultFireRate = 25
@@ -37,6 +37,9 @@ final class ParticlesDelegate: NSObject, NSApplicationDelegate {
     private var cannonMode = CommandLine.arguments.contains("--cannon") || UserDefaults.standard.bool(forKey: "cannonMode")
     private var fireRate = savedOption(forKey: "cannonFireRate", options: fireRates, default: defaultFireRate)
     private var cursorCollisionsEnabled = UserDefaults.standard.bool(forKey: "cursorCollisions")
+    private var accelerometerEnabled = UserDefaults.standard.bool(forKey: "accelerometer")
+    private let accelerometer = Accelerometer()
+    private weak var accelerometerMenuItem: NSMenuItem?
 
     private struct DisplayConfiguration: Equatable {
         let id: UInt32
@@ -106,6 +109,7 @@ final class ParticlesDelegate: NSObject, NSApplicationDelegate {
 
     private func makeStatusMenu() -> NSMenu {
         let menu = NSMenu()
+        menu.delegate = self
         menu.autoenablesItems = false
         let mode = NSMenuItem(title: "Simulation mode", action: nil, keyEquivalent: "")
         let modeControl = NSSegmentedControl(labels: ["Cannon", "Waterfall"], trackingMode: .selectOne,
@@ -178,6 +182,10 @@ final class ParticlesDelegate: NSObject, NSApplicationDelegate {
         let cursor = menu.addItem(withTitle: "Cursor collisions", action: #selector(toggleCursorCollisions), keyEquivalent: "")
         cursor.target = self
         cursor.state = cursorCollisionsEnabled ? .on : .off
+        let motion = menu.addItem(withTitle: "Accelerometer", action: #selector(toggleAccelerometer), keyEquivalent: "")
+        motion.target = self
+        accelerometerMenuItem = motion
+        updateAccelerometerMenuItem()
         menu.addItem(.separator())
         let quit = menu.addItem(withTitle: "Quit", action: #selector(quitApp), keyEquivalent: "q")
         quit.target = self
@@ -245,6 +253,32 @@ final class ParticlesDelegate: NSObject, NSApplicationDelegate {
         statusItem?.menu = makeStatusMenu()
     }
 
+    @objc private func toggleAccelerometer() {
+        accelerometerEnabled.toggle()
+        UserDefaults.standard.set(accelerometerEnabled, forKey: "accelerometer")
+        updateAccelerometer()
+        updateAccelerometerMenuItem()
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        updateAccelerometerMenuItem()
+    }
+
+    private func updateAccelerometerMenuItem() {
+        let failure = accelerometerEnabled ? accelerometer.failure : nil
+        accelerometerMenuItem?.title = failure == nil ? "Accelerometer" : "Accelerometer (unavailable)"
+        accelerometerMenuItem?.state = accelerometerEnabled ? (failure == nil ? .on : .mixed) : .off
+        accelerometerMenuItem?.toolTip = failure ?? "Tilt or gently shake your MacBook to move the balls. Requires a supported built-in sensor."
+    }
+
+    private func updateAccelerometer() {
+        if accelerometerEnabled && ballsEnabled && overlays.contains(where: { $0.isOnActiveSpace }) {
+            accelerometer.start()
+        } else {
+            accelerometer.stop()
+        }
+    }
+
     @objc private func toggleCollisionBorders() {
         collisionBordersVisible.toggle()
         statusItem?.menu = makeStatusMenu()
@@ -280,6 +314,7 @@ final class ParticlesDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func stopSimulation() {
+        accelerometer.stop()
         windowTracker.stop()
         generation += 1
         refreshTask?.cancel()
@@ -319,6 +354,7 @@ final class ParticlesDelegate: NSObject, NSApplicationDelegate {
             let count = index == screens.count - 1 ? remaining : Int(CGFloat(totalCount) * screen.frame.width / totalWidth)
             remaining -= count
             do { overlays.append(try ParticleOverlay(screen: screen, count: count, windowTracker: windowTracker,
+                                                    accelerometer: accelerometer,
                                                     collisionBordersVisible: collisionBordersVisible,
                                                     cursorCollisionsEnabled: cursorCollisionsEnabled,
                                                     cannonMode: cannonMode && ballsEnabled, fireRate: fireRate,
@@ -329,6 +365,7 @@ final class ParticlesDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func willSleep() {
+        accelerometer.stop()
         windowTracker.stop()
         refreshTask?.cancel()
         overlays.forEach { $0.pause() }
@@ -344,6 +381,7 @@ final class ParticlesDelegate: NSObject, NSApplicationDelegate {
     private func startRefreshing() {
         refreshTask?.cancel()
         windowTracker.stop()
+        updateAccelerometer()
         guard ballsEnabled || collisionBordersVisible,
               overlays.contains(where: { $0.isOnActiveSpace }) else { return }
         windowTracker.start(anchors: overlays.map(\.spaceAnchor))

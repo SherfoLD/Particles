@@ -20,7 +20,7 @@ public final class MetalParticleSimulation {
         var dynamics: SIMD4<Float>
         var counts: SIMD4<UInt32> // particles, hash mask, rectangles, polygons
         var geometry: SIMD4<UInt32> // windows, curve edges, restitution flag, cache generation
-        var limits: SIMD4<Float> // speed, compression time per contact pass, reserved, cursor sweep
+        var limits: SIMD4<Float> // speed, compression time per contact pass, horizontal acceleration, cursor sweep
         var cursorSegment: SIMD4<Float> // previous/current position
         var cursorMotion: SIMD4<Float> // velocity, radius (zero disables), inverse segment length squared
         var cursorBounds: SIMD4<Float> // swept capsule bounds
@@ -225,10 +225,10 @@ public final class MetalParticleSimulation {
         let bounds = engine.bounds
         let cursor = engine.consumeCursor(at: time)
         var p = Parameters(bounds: SIMD4(Float(bounds.minX), Float(bounds.minY), Float(bounds.maxX), Float(bounds.maxY)),
-                           dynamics: SIMD4(Float(engine.gravity), Float(step / Double(substeps)), inverseCellSize, skin),
+                           dynamics: SIMD4(Float(engine.gravity + engine.externalAcceleration.dy), Float(step / Double(substeps)), inverseCellSize, skin),
                            counts: SIMD4(UInt32(engine.activeParticleCount), UInt32(bucketCount - 1), counts.x, counts.y),
                            geometry: SIMD4(counts.z, counts.w, 0, 0),
-                           limits: SIMD4(Float(engine.maximumSpeed), 0, 0, 0),
+                           limits: SIMD4(Float(engine.maximumSpeed), 0, Float(engine.externalAcceleration.dx), 0),
                            cursorSegment: .zero, cursorMotion: .zero, cursorBounds: .zero)
         if let cursor {
             p.cursorSegment = SIMD4(Float(cursor.start.x), Float(cursor.start.y), Float(cursor.end.x), Float(cursor.end.y))

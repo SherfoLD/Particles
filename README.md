@@ -27,6 +27,9 @@ Choose **Remove balls** or **Remove cannon** for a clean slate. Switching modes 
 | **Ball size** | Choose Small, Medium, or Large before spawning. Larger balls have lower count limits. |
 | **Ball speed** | Change the speed limit while the balls are moving. |
 | **Cursor collisions** | Turn your cursor into an invisible brush and stir the balls as you move it. |
+| **Accelerometer** | Tilt or gently shake a supported MacBook to move the balls. The setting is saved and applies to both modes and all displays. |
+
+Accelerometer support uses the built-in sensor on compatible Apple Silicon MacBooks. If the sensor cannot be read, the menu shows its status and balls keep their normal gravity. Toggle the option off and on to retry. Motion sensing stops when you remove the balls or cannon, leave their Space, or put your Mac to sleep.
 
 The overlay lets clicks pass through to your desktop and other apps; only the cannon catches mouse input. Balls rest on window tops, tumble when windows move, and pause with their display when you switch Spaces or your Mac sleeps. If a window crushes a pile into a space too small for it, some balls disappear. Spawn a fresh batch to bring them back.
 

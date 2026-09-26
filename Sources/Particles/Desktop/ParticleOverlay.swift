@@ -19,12 +19,15 @@ final class ParticleOverlay {
     private var outlineRevision: UInt64?
     private var cannon: DesktopCannon?
     private var cursorCollisionsEnabled: Bool
+    private let accelerometer: Accelerometer
 
-    init(screen: NSScreen, count: Int, windowTracker: WindowGeometryTracker, collisionBordersVisible: Bool = false,
+    init(screen: NSScreen, count: Int, windowTracker: WindowGeometryTracker, accelerometer: Accelerometer,
+         collisionBordersVisible: Bool = false,
          cursorCollisionsEnabled: Bool = false,
          cannonMode: Bool = false, fireRate: Int = 24, ballRadius: CGFloat = 1.5,
          ballSpeed: CGFloat = ParticleEngine.defaultMaximumSpeed) throws {
         self.windowTracker = windowTracker
+        self.accelerometer = accelerometer
         self.cursorCollisionsEnabled = cursorCollisionsEnabled
         let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as! UInt32
         display = DesktopDisplay(id: number, name: screen.localizedName, frame: CGDisplayBounds(number))
@@ -68,6 +71,9 @@ final class ParticleOverlay {
                 return false
             }
             guard !self.view.isPaused else { return false }
+            let motion = self.accelerometer.acceleration(at: time)
+            let strength = abs(self.scene.engine.gravity)
+            self.scene.engine.externalAcceleration = CGVector(dx: motion.dx * strength, dy: motion.dy * strength)
             self.updateCursor()
             self.updateObstacles(at: time, snapshot: snapshot)
             self.cannon?.advance(at: time)
